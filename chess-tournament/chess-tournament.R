@@ -8,10 +8,10 @@ df_players <- select(df,1:2) %>%
   filter(!is.na(df['Player Name'])) %>% 
   filter(Pair!='Num') # cleanup
 
-df_player1 <- filter(df_players,row_number() %% 2 == 1) # separate even and odd rows
-df_player2 <- filter(df_players,row_number() %% 2 == 0)
+df_players_odd <- filter(df_players,row_number() %% 2 == 1) # separate even and odd rows
+df_players_even <- filter(df_players,row_number() %% 2 == 0)
 
-df_players <- bind_cols(df_player1, df_player2) # bind columns
+df_players <- bind_cols(df_players_odd, df_players_even) # bind columns
 
 names(df_players) <- c('player_id','name','state','player_info') # rename multiple columns
 
@@ -29,7 +29,7 @@ df_matches <- select(df_matches,1,4:10) # drop extra cols
 
 names(df_matches) <- c('player_id','1','2','3','4','5','6','7') # rename multiple columns
 
-df_matches <- pivot_longer(df_matches,!player_id, names_to='round', values_to='match_info') # pivot
+df_matches <- pivot_longer(df_matches,!player_id, names_to='round', values_to='match_info') # pivot all columns except player_id
 
 df_matches <- df_matches %>% 
   mutate(outcome=str_sub(match_info,1,1), opponent_id=str_sub(match_info,str_length(match_info)-1)) %>% # break out outcome and opponent id
