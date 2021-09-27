@@ -30,8 +30,8 @@ This tabular format makes for a nice visual presentation, but it poses a challen
 
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
-df <- read_delim('data/tournamentinfo.txt', delim='|',
-                 skip=2, trim_ws=TRUE, show_col_types = FALSE) %>% 
+df <- read_delim('https://raw.githubusercontent.com/jefedigital/cuny-data-607-projects/main/chess-tournament/data/tournamentinfo.txt', 
+                 delim='|', skip=2, trim_ws=TRUE, show_col_types = FALSE) %>% 
   rename(player_id=1, player_name=2)
   
 df <- select(df,1:length(df)-1) # drop last col

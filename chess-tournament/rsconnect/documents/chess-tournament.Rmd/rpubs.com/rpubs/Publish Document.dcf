@@ -1,0 +1,11 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/811379/d2af67b3ef454561bfef4f429475ac02
+bundleId: https://api.rpubs.com/api/v1/document/811379/d2af67b3ef454561bfef4f429475ac02
+url: http://rpubs.com/jefedigital/811379
+when: 1632104108.00544
+lastSyncTime: 1632104108.00545

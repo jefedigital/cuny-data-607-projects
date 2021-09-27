@@ -162,8 +162,8 @@ a.sourceLine {
 <p>As we can see, our source data is not well-formatted (or ‘tidy’) with each row representing a single observation of player performance; instead, each player has information stored over two consecutive rows.</p>
 <p>This tabular format makes for a nice visual presentation, but it poses a challenge for processing and analysis. We’ll take two different approaches to tidying this data - but first let’s load it in using <strong>read_delim</strong> with the pipe character (|) as our separator.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read_delim</span>(<span class="st">&#39;data/tournamentinfo.txt&#39;</span>, <span class="at">delim=</span><span class="st">&#39;|&#39;</span>,</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">skip=</span><span class="dv">2</span>, <span class="at">trim_ws=</span><span class="cn">TRUE</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read_delim</span>(<span class="st">&#39;https://raw.githubusercontent.com/jefedigital/cuny-data-607-projects/main/chess-tournament/data/tournamentinfo.txt&#39;</span>, </span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">delim=</span><span class="st">&#39;|&#39;</span>, <span class="at">skip=</span><span class="dv">2</span>, <span class="at">trim_ws=</span><span class="cn">TRUE</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">player_id=</span><span class="dv">1</span>, <span class="at">player_name=</span><span class="dv">2</span>)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">select</span>(df,<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(df)<span class="sc">-</span><span class="dv">1</span>) <span class="co"># drop last col</span></span></code></pre></div>
@@ -381,9 +381,6 @@ a.sourceLine {
 <div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(df_final_all_players, <span class="st">&#39;output/all_players.csv&#39;</span>)</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(df_final_all_matches, <span class="st">&#39;output/played_all_matches.csv&#39;</span>)</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(df_final_some_matches, <span class="st">&#39;output/played_some_matches.csv&#39;</span>)</span></code></pre></div>
-</div>
-<div id="analysis" class="section level2">
-<h2>Analysis</h2>
 </div>
     </section>
   </div>
