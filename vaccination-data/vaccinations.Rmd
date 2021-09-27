@@ -12,7 +12,7 @@ output:
 
 Our source data is a COVID-19 table of Israeli hospitalization rates from August 2021.  These data are labeled for patient age and for vaccination status.
 
-IMAGE
+![img: data preview](https://raw.githubusercontent.com/jefedigital/cuny-data-607-projects/main/vaccination-data/docs/data_img.png)
 
 With this data and the inclusion of some broader domain knowledge, we will attempt to answer the following questions:
 
@@ -28,7 +28,7 @@ With this data and the inclusion of some broader domain knowledge, we will attem
 
 - Based on recent demographic data, the total population of Israel in August 2021 was approximately 9.3 Million. ^[https://www.jewishvirtuallibrary.org/latest-population-statistics-for-israel]
 
-- As of February 2021, all Israelis aged 16 and over were eligible to receive COVID-19 vaccinations.^[https://www.usnews.com/news/health-news/articles/2021-02-04/all-israelis-over-16-are-eligible-for-coronavirus-vaccine]
+- As of February 2021, all Israelis aged 16 and over were eligible to receive COVID-19 vaccinations. ^[https://www.usnews.com/news/health-news/articles/2021-02-04/all-israelis-over-16-are-eligible-for-coronavirus-vaccine]
 
 - The Israeli population skews quite young, with approximately 28% of all Israelis aged 14 and under. ^[https://www.statista.com/statistics/526596/age-structure-in-israel/]
 
@@ -43,7 +43,7 @@ library(tidyverse)
 library(knitr)
 
 # load data
-df <- read_csv('data/israel_vax_data.csv', skip=1)
+df <- read_csv('https://raw.githubusercontent.com/jefedigital/cuny-data-607-projects/main/vaccination-data/data/israel_vax_data.csv', skip=1)
 df <- select(df,!last_col()) # drop last col
 
 # bind alternating rows
@@ -112,9 +112,3 @@ We observe very different Efficacy rates per age group. The under-50 group produ
 
 It would be difficult to explain these results without a great deal more of information - there could be a number of confounding variables at play including rates of co-morbidity and overall health between age groups, rates of hospitalization among vaccinated and non-vaccinated groups, and others.
 
-
-
-
-```{r}
-
-```
