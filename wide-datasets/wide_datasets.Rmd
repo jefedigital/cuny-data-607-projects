@@ -1,0 +1,127 @@
+---
+title: "Transforming Wide Datasets"
+author: "Jeff Parks"
+date: "`r Sys.Date()`"
+description: "CUNY Data 607 - Fall 2021, Project 2"
+output:
+#  pdf_document:
+#    latex_engine: xelatex
+#    extra_dependencies: ["geometry", "multicol", "multirow"]
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(knitr)
+library(readxl)
+```
+
+## Assignment
+
+## Dataset 1: World Governmental Indicators
+
+### Data Prep
+```{r, message=FALSE, warning=FALSE}
+# import excel sheet and skip header rows
+df_raw <- read_excel('data/wgi/wgidataset.xlsx', sheet='ControlofCorruption', skip=12)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+kable(df_raw[1:5,1:5], caption="raw df")
+```
+
+discussion
+
+```{r, message=FALSE, warning=FALSE}
+# convert the column names and first row into 2 vectors
+df_col_1 <- colnames(df_raw)
+df_col_2 <- as.character(slice(df_raw,1))
+
+# get rid of the auto numbering in the column names
+df_col_1 <- str_remove(df_col_1, '\\..*$')
+
+# now join each element of the two vectors with paste0 (no separators)
+df_cols <- paste0(df_col_1, df_col_2)
+
+# make new df with our new column names and the values
+df <- df_raw[-1,]
+names(df) <- df_cols
+
+# data cleanup .. replace all the instances of string '#N/A' with NA
+nona <- function(s) {str_replace(s,'#N/A','NA')}
+df <- df %>% mutate(across(everything(), nona))
+
+# convert columns to numeric type
+df <- type_convert(df)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+kable(df[1:5,1:5], caption="formatted df")
+```
+
+Pivot time .. we want seven cols in total: country, code, year, category and measure.
+
+```{r, message=FALSE, warning=FALSE}
+# we can use the names_pattern parameter of pivot_longer to separate Year and Category into separate columns .. pretty useful!
+df <- df %>% pivot_longer(
+ cols = `1996Estimate`:`2020Upper`,
+ names_to = c('Year','Category'),
+ names_pattern = '(.{4})(.*)',
+ values_to = 'Measure'
+)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+kable(df[50:55,], caption="pivoted df")
+```
+
+### Analysis
+
+Cool, now let's demonstrate a couple of simple visualizations...
+
+```{r, echo=FALSE, fig.show='hold', out.width='50%'}
+
+df_rank_2020 <- df %>% 
+  filter(Category=='Rank', Year==2020) %>% 
+  filter(Measure >= 90) %>%
+  arrange(desc(Measure))
+
+df_rank_2020 %>% ggplot(aes(x=reorder(Code, -Measure), y=Measure)) +
+  geom_bar(stat='identity')
+```
+
+```{r, echo=FALSE, fig.show='hold', out.width='50%'}
+
+df_rank_annual <- df %>% 
+  filter(Category=='Rank', Code=='AFG') %>% 
+  arrange(Year)
+
+df_rank_annual %>% ggplot(aes(x=Year, y=Measure)) +
+  geom_bar(stat='identity')
+
+```
+
+---
+
+## Dataset 2: NYC Coronavirus Statistics
+
+### Data Prep
+```{r, message=FALSE, warning=FALSE}
+```
+
+```{r, message=FALSE, warning=FALSE}
+```
+
+---
+
+## Dataset 3: Some third thing
+
+### Data Prep
+```{r, message=FALSE, warning=FALSE}
+```
+
+```{r, message=FALSE, warning=FALSE}
+```
