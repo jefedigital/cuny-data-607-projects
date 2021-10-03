@@ -7,15 +7,18 @@ output:
 #  pdf_document:
 #    latex_engine: xelatex
 #    extra_dependencies: ["geometry", "multicol", "multirow"]
-  prettydoc::html_pretty:
-    theme: architect
-    highlight: github
+#  prettydoc::html_pretty:
+#    theme: architect
+#    highlight: github
+  rmdformats::robobook:
+    highlight: kate
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(knitr)
+library(kableExtra)
 library(readxl)
 ```
 
@@ -26,11 +29,13 @@ library(readxl)
 ### Data Prep
 ```{r, message=FALSE, warning=FALSE}
 # import excel sheet and skip header rows
-df_raw <- read_excel('data/wgi/wgidataset.xlsx', sheet='ControlofCorruption', skip=12)
+df_raw <- read_excel('data/wgi/wgidataset.xlsx', 
+                     sheet='ControlofCorruption', skip=12)
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-kable(df_raw[1:5,1:5], caption="raw df")
+kable(df_raw[1:5,1:4], caption="raw df") %>%
+  kable_minimal()
 ```
 
 discussion
@@ -59,7 +64,8 @@ df <- type_convert(df)
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-kable(df[1:5,1:5], caption="formatted df")
+kable(df[1:5,1:5], caption="formatted df") %>%
+  kable_minimal()
 ```
 
 Pivot time .. we want seven cols in total: country, code, year, category and measure.
@@ -75,7 +81,8 @@ df <- df %>% pivot_longer(
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-kable(df[50:55,], caption="pivoted df")
+kable(df[50:55,], caption="pivoted df") %>%
+  kable_minimal()
 ```
 
 ### Analysis
@@ -106,13 +113,50 @@ df_rank_annual %>% ggplot(aes(x=Year, y=Measure)) +
 
 ---
 
-## Dataset 2: NYC Coronavirus Statistics
+## Dataset 2: League of Legends Champions
 
 ### Data Prep
 ```{r, message=FALSE, warning=FALSE}
+library(tidyjson)
+library(rvest)
+
+# get json from webpage with rvest read_html
+page <- read_html('https://ddragon.leagueoflegends.com/cdn/11.19.1/data/en_US/champion.json')
+
+# parse the html with rvest, return just the contents of the <body> element
+json <- page %>% html_elements("body") %>% html_text()
+
+# check out the structure
+json %>% gather_object %>% json_types
+
+# get only the 'data' object from the json and spread_all into a 
+# json table, then convert back to regular dataframe
+champions <- json %>% 
+  enter_object(data) %>% 
+  gather_object %>% 
+  spread_all %>% 
+  as_data_frame.tbl_json %>%
+  select(!blurb) # long strings
 ```
 
 ```{r, message=FALSE, warning=FALSE}
+kable(head(champions), caption="formatted df") %>%
+  kable_minimal()
+```
+
+```{r, echo=FALSE, fig.show='hold', out.width='50%'}
+df <- champions %>% 
+  select(c('name','stats.hp','stats.mp','stats.movespeed','stats.armor'))
+
+ggplot(df) +
+ aes(x = stats.hp) +
+ geom_histogram(binwidth = 10, color = "#112446", fill="#ffffff") +
+ theme_minimal()
+
+ggplot(df) +
+  aes(x = stats.mp) +
+  geom_histogram(binwidth=50, color = "#112446", fill="#ffffff") +
+  theme_minimal()
 ```
 
 ---
