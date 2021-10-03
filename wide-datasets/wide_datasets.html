@@ -222,14 +222,25 @@
 <!-- Don't indent these lines or it will mess pre blocks indentation --> 
 <div id="assignment" class="section level2">
 <h2>Assignment</h2>
+<p>Three different untidy (or “wide”) datasets were selected in order to practice different methods of data preparation.</p>
 </div>
 <div id="dataset-1-world-governmental-indicators" class="section level2">
 <h2>Dataset 1: World Governmental Indicators</h2>
+<p>This dataset from the World Bank <a href="http://info.worldbank.org/governance/wgi/">source</a> reports aggregate and individual governance indicators for over 200 countries and territories over the period 1996–2020, for six dimensions of governance:</p>
+<ul>
+<li>Voice and Accountability</li>
+<li>Political Stability and Absence of Violence/Terrorism</li>
+<li>Government Effectiveness</li>
+<li>Regulatory Quality</li>
+<li>Rule of Law</li>
+<li>Control of Corruption</li>
+</ul>
 <div id="data-prep" class="section level3">
 <h3>Data Prep</h3>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># import excel sheet and skip header rows</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>df_raw <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">&#39;data/wgi/wgidataset.xlsx&#39;</span>, </span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet=</span><span class="st">&#39;ControlofCorruption&#39;</span>, <span class="at">skip=</span><span class="dv">12</span>)</span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">#curl_download(&#39;http://info.worldbank.org/governance/wgi/Home/downLoadFile?fileName=wgidataset.xlsx&#39;, &#39;data/wgi/wgidataset.xlsx&#39;) # first run only</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>df_raw <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">&#39;data/wgi/wgidataset.xlsx&#39;</span>, <span class="at">sheet=</span><span class="st">&#39;ControlofCorruption&#39;</span>, <span class="at">skip=</span><span class="dv">12</span>)</span></code></pre></div>
 <table class=" lightable-minimal" style="font-family: &quot;Trebuchet MS&quot;, verdana, sans-serif; margin-left: auto; margin-right: auto;">
 <caption>
 raw df

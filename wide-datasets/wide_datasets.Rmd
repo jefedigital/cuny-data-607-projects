@@ -16,6 +16,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(curl)
 library(tidyverse)
 library(knitr)
 library(kableExtra)
@@ -28,13 +29,22 @@ Three different untidy (or "wide") datasets were selected in order to practice d
 
 ## Dataset 1: World Governmental Indicators
 
-The source 
+This dataset from the World Bank [source](http://info.worldbank.org/governance/wgi/) reports aggregate and individual governance indicators for over 200 countries and territories over the period 1996–2020, for six dimensions of governance:
+
+- Voice and Accountability
+- Political Stability and Absence of Violence/Terrorism
+- Government Effectiveness
+- Regulatory Quality
+- Rule of Law
+- Control of Corruption
+
 
 ### Data Prep
 ```{r, message=FALSE, warning=FALSE}
 # import excel sheet and skip header rows
-df_raw <- read_excel('https://github.com/jefedigital/cuny-data-607-projects/blob/main/wide-datasets/data/wgi/wgidataset.xlsx?raw=true', 
-                     sheet='ControlofCorruption', skip=12)
+
+#curl_download('http://info.worldbank.org/governance/wgi/Home/downLoadFile?fileName=wgidataset.xlsx', 'data/wgi/wgidataset.xlsx') # first run only
+df_raw <- read_excel('data/wgi/wgidataset.xlsx', sheet='ControlofCorruption', skip=12)
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
