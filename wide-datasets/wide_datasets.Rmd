@@ -24,12 +24,16 @@ library(readxl)
 
 ## Assignment
 
+Three different untidy (or "wide") datasets were selected in order to practice different methods of data preparation.
+
 ## Dataset 1: World Governmental Indicators
+
+The source 
 
 ### Data Prep
 ```{r, message=FALSE, warning=FALSE}
 # import excel sheet and skip header rows
-df_raw <- read_excel('data/wgi/wgidataset.xlsx', 
+df_raw <- read_excel('https://github.com/jefedigital/cuny-data-607-projects/blob/main/wide-datasets/data/wgi/wgidataset.xlsx?raw=true', 
                      sheet='ControlofCorruption', skip=12)
 ```
 
