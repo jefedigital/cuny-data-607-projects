@@ -1,8 +1,12 @@
 library(tidyverse)
 library(readxl)
+library(curl)
 
 # import excel sheet and skip header rows
+curl_download('http://info.worldbank.org/governance/wgi/Home/downLoadFile?fileName=wgidataset.xlsx', 'data/wgi/wgidataset.xlsx')
+
 df_raw <- read_excel('data/wgi/wgidataset.xlsx', sheet='ControlofCorruption', skip=12)
+
 
 # need to combine the first two rows 
 
@@ -38,29 +42,33 @@ df <- type_convert(df)
 # country, code, year, category, measure
 
 df <- df %>% pivot_longer(
- cols = `1996Estimate`:`2020Upper`,
- names_to = c('Year','Category'),
- names_pattern = '(.{4})(.*)',
- values_to = 'Measure'
+  cols = `1996Estimate`:`2020Upper`,
+  names_to = c('Year','Measure'),
+  names_pattern = '(.{4})(.*)',
+  values_to = 'Value'
 )
 
 
 # done, now let's demonstrate a couple of simple visualizations
 
 df_rank_2020 <- df %>% 
-  filter(Category=='Rank', Year==2020) %>% 
-  filter(Measure >= 90) %>%
-  arrange(desc(Measure))
+  filter(Measure=='Rank', Year==2020) %>% 
+  filter(Value >= 90) %>%
+  arrange(desc(Value))
 
-df_rank_2020 %>% ggplot(aes(x=reorder(Code, -Measure), y=Measure)) +
-  geom_bar(stat='identity')
-
+df_rank_2020 %>% ggplot(aes(x=reorder(Code, -Value), y=Value)) +
+  geom_bar(stat='identity') +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x='Year')
 
 df_rank_annual <- df %>% 
-  filter(Category=='Rank', Code=='AFG') %>% 
+  filter(Measure=='Rank', Code=='AFG') %>% 
   arrange(Year)
 
-df_rank_annual %>% ggplot(aes(x=Year, y=Measure)) +
-  geom_bar(stat='identity')
+df_rank_annual %>% ggplot(aes(x=Year, y=Value)) +
+  geom_bar(stat='identity') +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 90))
 
           

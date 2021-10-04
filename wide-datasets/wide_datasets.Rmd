@@ -36,7 +36,9 @@ This dataset from the World Bank ([source](http://info.worldbank.org/governance/
 - Rule of Law
 - Control of Corruption
 
-The source file is an Excel workbook (.xlsx) with multiple tabs, and for this exercise we'll select one tab to focus on - **Control of Corruption**.  There is good deal of header text on this tab, and a 'multiindex' of column data pairing years with six numeric measures (Estimate, StdErr, NumSrc, Rank, Lower and Upper) resulting in 134 total columns.
+The source file is an Excel workbook (.xlsx) with multiple tabs, and for this exercise we'll select one tab to focus on - **Control of Corruption**.  
+
+There is good deal of header text on this tab, and a 'multiindex' of column data pairing years with six numeric measures (Estimate, StdErr, NumSrc, Rank, Lower and Upper) resulting in 134 total columns.
 
 ![Tab from wgidataset.xlsx](https://raw.githubusercontent.com/jefedigital/cuny-data-607-projects/main/wide-datasets/images/wgi.png)
 
@@ -67,8 +69,8 @@ Unlike Python's **Pandas**, there is not much native support for multi-index dat
 
 ```{r, message=FALSE, warning=FALSE}
 # convert the column names and first row into 2 vectors
-df_col_1 <- colnames(df_raw)
-df_col_2 <- as.character(slice(df_raw,1))
+df_col_1 <- colnames(df_raw) # colnames() returns a vector
+df_col_2 <- as.character(slice(df_raw,1)) # slice() returns a df, so make vector
 
 # get rid of the auto numbering in the column names
 df_col_1 <- str_remove(df_col_1, '\\..*$')
@@ -89,13 +91,19 @@ kable(df[1:5,1:5], caption="new df") %>%
   kable_minimal()
 ```
 
+A bit of data cleanup before we go further.  There are numerous instances of the string **#N/A** throughout this dataset, but we'll need to replace those with actual **NA** values that R will recognize as NULL instead of character strings.   
+
+One way to apply this across all columns at once is to define a function that uses **str_replace** and use **mutate(across(everything(), .func))** to execute.
+
+(Note: We could have done this after the following step instead, when we only have one column to deal with, but it's good practice..)
+
 ```{r, message=FALSE, warning=FALSE}
-# some data cleanup before we go further.. 
+
 # replace all the instances of string '#N/A' with actual NA
 nona <- function(s) {str_replace(s,'#N/A','NA')}
 df <- df %>% mutate(across(everything(), nona))
 
-# convert columns to numeric type
+# convert all available columns to numeric type
 df <- type_convert(df)
 ```
 
@@ -136,27 +144,34 @@ df_rank_2020 <- df %>%
   arrange(desc(Value))
 
 df_rank_2020 %>% ggplot(aes(x=reorder(Code, -Value), y=Value)) +
-  geom_bar(stat='identity') +
+  geom_bar(stat='identity', color = "#112446", fill="#ffffff") +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 90)) +
-  labs(Title='Top Countries', x='Year')
+  labs(title='Top Countries', x='Year')
 
 df_rank_annual <- df %>% 
   filter(Measure=='Rank', Code=='AFG') %>% 
   arrange(Year)
 
 df_rank_annual %>% ggplot(aes(x=Year, y=Value)) +
-  geom_bar(stat='identity') +
+  geom_bar(stat='identity', color = "#112446", fill="#ffffff") +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 90)) + 
-  labs(Title='Afghanistan')
+  labs(title='Afghanistan')
 ```
 
 ---
 
 ## Dataset 2: League of Legends Champions
 
+Video game developer **Riot Games** publishes **League of Legends** game data and assets for use by third-party developers.   We'll be looking at the top-level dataset ([source](https://developer.riotgames.com/docs/lol#data-dragon)) for the main game characters (or "Champions"), which is made available in JSON format.
+
+![champions.json](https://raw.githubusercontent.com/jefedigital/cuny-data-607-projects/main/wide-datasets/images/lol.png)
+
+
 ### Data Prep
+
+We'll be using two additional libraries to parse HTML and work efficiently with JSON-formatted data: **rvest** and **tidyjson**.
 ```{r, message=FALSE, warning=FALSE}
 library(tidyjson)
 library(rvest)
@@ -169,45 +184,65 @@ json <- page %>% html_elements("body") %>% html_text()
 
 # check out the structure
 json %>% gather_object %>% json_types
+```
 
-# get only the 'data' object from the json and spread_all into a 
+The tricky part here is, if we were to use **tidyjson** on the root node of this JSON document, we wouldn't get the information we need.  
+
+What we actually need is the fourth node "data", which itself is a series of nested JSON nodes.  We'll use the **enter_object** and **gather_object** functions to extract the content of this "data" node, **spread_all** to create a table of all the json elements, and then convert back into a standard R dataframe:
+
+```{r, message=FALSE, warning=FALSE}
+# get only the 'data' node from the json and spread_all into a 
 # json table, then convert back to regular dataframe
 champions <- json %>% 
   enter_object(data) %>% 
   gather_object %>% 
   spread_all %>% 
   as_data_frame.tbl_json %>%
-  select(!blurb) # long strings
+  select(!blurb) # delete this column for demo .. very long strings
 ```
 
-```{r, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 kable(head(champions), caption="formatted df") %>%
   kable_minimal()
 ```
 
-```{r, echo=FALSE, fig.show='hold', out.width='50%'}
+### Analysis
+
+**tidyjson** has expanded all the information from the "data" node into a well-formatted dataframe, and has automatically prepended any sub-node names such as "info" and stats" to make it easy to differentiate.
+
+Let's examine the results with a couple of simple graphs:
+
+```{r, fig.show="hold", fig.align = "center"}
 df <- champions %>% 
   select(c('name','stats.hp','stats.mp','stats.movespeed','stats.armor'))
 
 ggplot(df) +
- aes(x = stats.hp) +
- geom_histogram(binwidth = 10, color = "#112446", fill="#ffffff") +
- theme_minimal()
+  aes(x = stats.hp) +
+  geom_histogram(binwidth = 10, color = "#112446", fill="#ffffff") +
+  theme_minimal() + 
+  labs(title='Hit Points')
 
 ggplot(df) +
   aes(x = stats.mp) +
   geom_histogram(binwidth=50, color = "#112446", fill="#ffffff") +
-  theme_minimal()
+  theme_minimal() +
+  labs(title='Mana Points')
 ```
 
 ---
 
 ## Dataset 3: Global Infant Mortality Rates
 
+This dataset published by the World Bank ([source](https://data.worldbank.org/indicator/SH.DYN.MORT)) tracks the mortality rate of children under 5, measured as deaths per 1,000 live births.   The data are broken down by country, region and year from 1960 to 2019.
+
 ### Data Prep
+
+This dataset includes three separate files, one with the Mortality data by country and year, and two files with additional metadata.  
+
+For this exercise we will load the Mortality data file and the Region metadata file, then transform and join the two together for well-formatted and informative dataset.
 ```{r, message=FALSE, warning=FALSE}
-df_mort <- read_csv('data/worldbank/API_SH.DYN.MORT_DS2_en_csv_v2_3012069.csv', skip=4)
-df_meta <- read_csv('data/worldbank/Metadata_Country_API_SH.DYN.MORT_DS2_en_csv_v2_3012069.csv')
+df_mort <- read_csv('https://raw.githubusercontent.com/jefedigital/cuny-data-607-projects/main/wide-datasets/data/worldbank/API_SH.DYN.MORT_DS2_en_csv_v2_3012069.csv', skip=4)
+df_meta <- read_csv('https://raw.githubusercontent.com/jefedigital/cuny-data-607-projects/main/wide-datasets/data/worldbank/Metadata_Country_API_SH.DYN.MORT_DS2_en_csv_v2_3012069.csv')
 
 # cleanup
 df_mort <- df_mort %>% 
@@ -218,7 +253,13 @@ df_mort <- df_mort %>%
 df_meta <- df_meta %>%
   select(!SpecialNotes) %>%
   select(!last_col())
+```
 
+One additional step on the regional metadata .. we will use the conditional statement **ifelse** to impute whether the observation pertains to a Country or a Region, and to impute the value from the TableName column where Region is NA.
+
+(This is due to a very large number of 'secondary' Region categories, and the likelihood of wanting to look at Country-only and Region-only data in any further analysis.)
+
+```{r, message=FALSE, warning=FALSE}
 # impute missing Region values
 df_meta <- df_meta %>% 
   mutate(`Record Type` = ifelse(is.na(Region),'Region','Country')) %>%
@@ -227,6 +268,7 @@ df_meta <- df_meta %>%
   select(!TableName)
 ```
 
+Now, we pivot the Mortality table with **pivot_longer** so that each row corresponds to a single Country and Year.   We then **left_join** the Region metadata and perform a little cleanup.
 ```{r, message=FALSE, warning=FALSE}
 # pivot
 df_mort <- df_mort %>% 
@@ -237,22 +279,35 @@ df_mort <- df_mort %>%
 # join
 df <- left_join(df_mort, df_meta, by='Code')
 
-# correct to actual rate (/1000)
+# correct Mortality Rate to actual rate (/1000)
 df <- df %>% mutate(`Mortality Rate` = `Mortality Rate`/1000)
+```
 
+To aid in analysis, we'll filter two subtables - one with Country data only, and one with Region data only.  
+
+Let's also take a look at the unique names in each table to compare the "main" geo-based Regions in the Countries table, with a much larger number of "secondary" Regions in the Region table:
+
+```{r, message=FALSE, warning=FALSE}
 # analysis
 df_regions <- df %>% filter(`Record Type` == 'Region')
 df_countries <- df %>% filter(`Record Type` == 'Country')
 
-unique(df_regions$Name)
+# unique regions in the country table 
 unique(df_countries$Region)
 
+# unique regions in the regions table
+unique(df_regions$Name)
 ```
+
+### Analysis
+
+We should have a good foundation now for further analysis.  
+
+Let's demonstrate with a line graph of Mortality Rates by country, from the Latin America and Caribbean region.  Right away, we can see that while child mortality has been steadily dropping, there are a few alarming outliers where the trend has reversed in recent years, or where catastrophic events have had a significant impact (such as the 2010 Haiti earthquake, seen in the top line below.)
 
 ```{r, message=FALSE, warning=FALSE}
 df_countries_latam <- df_countries %>%
   filter(Region == 'Latin America & Caribbean')
-
 
 ggplot(df_countries_latam) +
   aes(x = Year, y = `Mortality Rate`, group = Name, label=Name) +
