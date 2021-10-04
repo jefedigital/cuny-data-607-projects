@@ -16,11 +16,9 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(curl)
 library(tidyverse)
 library(knitr)
 library(kableExtra)
-library(readxl)
 ```
 
 ## Assignment
@@ -29,7 +27,7 @@ Three different untidy (or "wide") datasets were selected in order to practice d
 
 ## Dataset 1: World Governmental Indicators
 
-This dataset from the World Bank [source](http://info.worldbank.org/governance/wgi/) reports aggregate and individual governance indicators for over 200 countries and territories over the period 1996–2020, for six dimensions of governance:
+This dataset from the World Bank ([source](http://info.worldbank.org/governance/wgi/)) reports "aggregate and individual governance indicators for over 200 countries and territories over the period 1996–2020, for six dimensions of governance:"
 
 - Voice and Accountability
 - Political Stability and Absence of Violence/Terrorism
@@ -38,21 +36,34 @@ This dataset from the World Bank [source](http://info.worldbank.org/governance/w
 - Rule of Law
 - Control of Corruption
 
+The source file is an Excel workbook (.xlsx) with multiple tabs, and for this exercise we'll select one tab to focus on - **Control of Corruption**.  There is good deal of header text on this tab, and a 'multiindex' of column data pairing years with six numeric measures (Estimate, StdErr, NumSrc, Rank, Lower and Upper) resulting in 134 total columns.
+
+![Tab from wgidataset.xlsx](https://raw.githubusercontent.com/jefedigital/cuny-data-607-projects/main/wide-datasets/images/wgi.png)
 
 ### Data Prep
-```{r, message=FALSE, warning=FALSE}
-# import excel sheet and skip header rows
 
-#curl_download('http://info.worldbank.org/governance/wgi/Home/downLoadFile?fileName=wgidataset.xlsx', 'data/wgi/wgidataset.xlsx') # first run only
-df_raw <- read_excel('data/wgi/wgidataset.xlsx', sheet='ControlofCorruption', skip=12)
+The **ReadXL** library had some trouble reading in an .xlsx from a remote URL, so we'll use **Curl** to download a local copy first.  Then we'll read in the data from the **ControlofCorruption** tab, skipping all twelve rows of header information.
+
+```{r, message=FALSE, warning=FALSE}
+library(curl)
+library(readxl)
+
+# import excel sheet and skip header rows
+#curl_download('http://info.worldbank.org/governance/wgi/Home/downLoadFile?fileName=wgidataset.xlsx', 
+#              'data/wgi/wgidataset.xlsx') # first run only
+
+df_raw <- read_excel('data/wgi/wgidataset.xlsx', 
+                     sheet='ControlofCorruption', skip=12)
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-kable(df_raw[1:5,1:4], caption="raw df") %>%
+kable(df_raw[1:5,1:4], caption="sample of df_raw") %>%
   kable_minimal()
 ```
 
-discussion
+We'll want to create a **pivot_longer** of all this column data, but first we need to handle this multi-index in order to get a single row for each Country, Year and Measure.
+
+Unlike Python's **Pandas**, there is not much native support for multi-index dataframes in R.  One approach would be to grab the two rows containing Year and Measure, and fuse them into individual column names for a new dataframe that we can then pivot out:
 
 ```{r, message=FALSE, warning=FALSE}
 # convert the column names and first row into 2 vectors
@@ -65,11 +76,22 @@ df_col_1 <- str_remove(df_col_1, '\\..*$')
 # now join each element of the two vectors with paste0 (no separators)
 df_cols <- paste0(df_col_1, df_col_2)
 
+# preview
+df_cols[1:8]
+
 # make new df with our new column names and the values
 df <- df_raw[-1,]
 names(df) <- df_cols
+```
 
-# data cleanup .. replace all the instances of string '#N/A' with NA
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+kable(df[1:5,1:5], caption="new df") %>%
+  kable_minimal()
+```
+
+```{r, message=FALSE, warning=FALSE}
+# some data cleanup before we go further.. 
+# replace all the instances of string '#N/A' with actual NA
 nona <- function(s) {str_replace(s,'#N/A','NA')}
 df <- df %>% mutate(across(everything(), nona))
 
@@ -82,15 +104,19 @@ kable(df[1:5,1:5], caption="formatted df") %>%
   kable_minimal()
 ```
 
-Pivot time .. we want seven cols in total: country, code, year, category and measure.
+Now for the pivot!  
+
+The **pivot_longer** function has a parameter **names_pattern** that can use regex capturing groups to separate individual column names that contain multiple labels.  
+
+In this case we'll create two capture groups .. one for the four-digit year, and one for the Measure name:
 
 ```{r, message=FALSE, warning=FALSE}
 # we can use the names_pattern parameter of pivot_longer to separate Year and Category into separate columns .. pretty useful!
 df <- df %>% pivot_longer(
  cols = `1996Estimate`:`2020Upper`,
- names_to = c('Year','Category'),
+ names_to = c('Year','Measure'),
  names_pattern = '(.{4})(.*)',
- values_to = 'Measure'
+ values_to = 'Value'
 )
 ```
 
@@ -101,28 +127,29 @@ kable(df[50:55,], caption="pivoted df") %>%
 
 ### Analysis
 
-Cool, now let's demonstrate a couple of simple visualizations...
+We now have a tidy, well-formatted datset with each row representing a single observation of a given Year, Country and Measure.  Let's demonstrate with a couple of simple graphs:
 
-```{r, echo=FALSE, fig.show='hold', out.width='50%'}
-
+```{r, fig.show="hold", fig.align = "center"}
 df_rank_2020 <- df %>% 
-  filter(Category=='Rank', Year==2020) %>% 
-  filter(Measure >= 90) %>%
-  arrange(desc(Measure))
+  filter(Measure=='Rank', Year==2020) %>% 
+  filter(Value >= 90) %>%
+  arrange(desc(Value))
 
-df_rank_2020 %>% ggplot(aes(x=reorder(Code, -Measure), y=Measure)) +
-  geom_bar(stat='identity')
-```
-
-```{r, echo=FALSE, fig.show='hold', out.width='50%'}
+df_rank_2020 %>% ggplot(aes(x=reorder(Code, -Value), y=Value)) +
+  geom_bar(stat='identity') +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(Title='Top Countries', x='Year')
 
 df_rank_annual <- df %>% 
-  filter(Category=='Rank', Code=='AFG') %>% 
+  filter(Measure=='Rank', Code=='AFG') %>% 
   arrange(Year)
 
-df_rank_annual %>% ggplot(aes(x=Year, y=Measure)) +
-  geom_bar(stat='identity')
-
+df_rank_annual %>% ggplot(aes(x=Year, y=Value)) +
+  geom_bar(stat='identity') +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  labs(Title='Afghanistan')
 ```
 
 ---
