@@ -114,7 +114,7 @@ kable(df[1:5,1:5], caption="formatted df") %>%
 
 Now for the pivot!  
 
-The **pivot_longer** function has a parameter **names_pattern** that can use regex capturing groups to separate individual column names that contain multiple labels.  
+The **pivot_longer** function has a parameter **names_pattern** that accepts regex capturing groups to split column names during the pivot.
 
 In this case we'll create two capture groups .. one for the four-digit year, and one for the Measure name:
 
@@ -186,9 +186,11 @@ json <- page %>% html_elements("body") %>% html_text()
 json %>% gather_object %>% json_types
 ```
 
-The tricky part here is, if we were to use **tidyjson** on the root node of this JSON document, we wouldn't get the information we need.  
+The tricky part here is, if we were to use **tidyjson** at the root of this JSON document, we wouldn't get the information we need.  
 
-What we actually need is the fourth node "data", which itself is a series of nested JSON nodes.  We'll use the **enter_object** and **gather_object** functions to extract the content of this "data" node, **spread_all** to create a table of all the json elements, and then convert back into a standard R dataframe:
+What we actually need is the fourth node (helpfully named "data"), which itself is a series of nested JSON nodes that contain all the character information. 
+
+We'll use the **enter_object** and **gather_object** functions to extract the content of this "data" node, **spread_all** to create a table of all the json elements, and then convert back into a standard R dataframe:
 
 ```{r, message=FALSE, warning=FALSE}
 # get only the 'data' node from the json and spread_all into a 
@@ -246,13 +248,13 @@ df_meta <- read_csv('https://raw.githubusercontent.com/jefedigital/cuny-data-607
 
 # cleanup
 df_mort <- df_mort %>% 
-  select(!('2020':'...66')) %>% 
-  select(!('Indicator Name':'Indicator Code')) %>% 
-  rename(Name = 'Country Name', Code = 'Country Code')
+  select(!('2020':'...66')) %>% # drop the last 2 columns, no data
+  select(!('Indicator Name':'Indicator Code')) %>% # drop these cols, not needed
+  rename(Name = 'Country Name', Code = 'Country Code') # renaming
 
 df_meta <- df_meta %>%
-  select(!SpecialNotes) %>%
-  select(!last_col())
+  select(!SpecialNotes) %>% # drop column 'SpecialNotes', not needed
+  select(!last_col()) # drop last column, no data
 ```
 
 One additional step on the regional metadata .. we will use the conditional statement **ifelse** to impute whether the observation pertains to a Country or a Region, and to impute the value from the TableName column where Region is NA.
@@ -281,6 +283,11 @@ df <- left_join(df_mort, df_meta, by='Code')
 
 # correct Mortality Rate to actual rate (/1000)
 df <- df %>% mutate(`Mortality Rate` = `Mortality Rate`/1000)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+kable(df[70:75,1:5], caption="final df (sample)") %>%
+  kable_minimal()
 ```
 
 To aid in analysis, we'll filter two subtables - one with Country data only, and one with Region data only.  

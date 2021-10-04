@@ -598,7 +598,7 @@ NA
 </tbody>
 </table>
 <p>Now for the pivot!</p>
-<p>The <strong>pivot_longer</strong> function has a parameter <strong>names_pattern</strong> that can use regex capturing groups to separate individual column names that contain multiple labels.</p>
+<p>The <strong>pivot_longer</strong> function has a parameter <strong>names_pattern</strong> that accepts regex capturing groups to split column names during the pivot.</p>
 <p>In this case we’ll create two capture groups .. one for the four-digit year, and one for the Measure name:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we can use the names_pattern parameter of pivot_longer to separate Year and Category into separate columns .. pretty useful!</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span> <span class="fu">pivot_longer</span>(</span>
@@ -791,8 +791,9 @@ Estimate
 ## 2 &quot;\&quot;standAloneComp...&quot;             1 format  string
 ## 3 &quot;\&quot;11.19.1\&quot;&quot;                     1 version string
 ## 4 &quot;{\&quot;Aatrox\&quot;:{\&quot;ver...&quot;           1 data    object</code></pre>
-<p>The tricky part here is, if we were to use <strong>tidyjson</strong> on the root node of this JSON document, we wouldn’t get the information we need.</p>
-<p>What we actually need is the fourth node “data”, which itself is a series of nested JSON nodes. We’ll use the <strong>enter_object</strong> and <strong>gather_object</strong> functions to extract the content of this “data” node, <strong>spread_all</strong> to create a table of all the json elements, and then convert back into a standard R dataframe:</p>
+<p>The tricky part here is, if we were to use <strong>tidyjson</strong> at the root of this JSON document, we wouldn’t get the information we need.</p>
+<p>What we actually need is the fourth node (helpfully named “data”), which itself is a series of nested JSON nodes that contain all the character information.</p>
+<p>We’ll use the <strong>enter_object</strong> and <strong>gather_object</strong> functions to extract the content of this “data” node, <strong>spread_all</strong> to create a table of all the json elements, and then convert back into a standard R dataframe:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get only the &#39;data&#39; node from the json and spread_all into a </span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># json table, then convert back to regular dataframe</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>champions <span class="ot">&lt;-</span> json <span class="sc">%&gt;%</span> </span>
@@ -1647,7 +1648,7 @@ champion
 <div id="analysis-1" class="section level3">
 <h3>Analysis</h3>
 <p><strong>tidyjson</strong> has expanded all the information from the “data” node into a well-formatted dataframe, and has automatically prepended any sub-node names such as “info” and stats” to make it easy to differentiate.</p>
-<p>Let’s examine the results with a coupld of simple graphs:</p>
+<p>Let’s examine the results with a couple of simple graphs:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> champions <span class="sc">%&gt;%</span> </span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="st">&#39;name&#39;</span>,<span class="st">&#39;stats.hp&#39;</span>,<span class="st">&#39;stats.mp&#39;</span>,<span class="st">&#39;stats.movespeed&#39;</span>,<span class="st">&#39;stats.armor&#39;</span>))</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1678,13 +1679,13 @@ champion
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># cleanup</span></span>
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>df_mort <span class="ot">&lt;-</span> df_mort <span class="sc">%&gt;%</span> </span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">!</span>(<span class="st">&#39;2020&#39;</span><span class="sc">:</span><span class="st">&#39;...66&#39;</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">!</span>(<span class="st">&#39;Indicator Name&#39;</span><span class="sc">:</span><span class="st">&#39;Indicator Code&#39;</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Name =</span> <span class="st">&#39;Country Name&#39;</span>, <span class="at">Code =</span> <span class="st">&#39;Country Code&#39;</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">!</span>(<span class="st">&#39;2020&#39;</span><span class="sc">:</span><span class="st">&#39;...66&#39;</span>)) <span class="sc">%&gt;%</span> <span class="co"># drop the last 2 columns, no data</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">!</span>(<span class="st">&#39;Indicator Name&#39;</span><span class="sc">:</span><span class="st">&#39;Indicator Code&#39;</span>)) <span class="sc">%&gt;%</span> <span class="co"># drop these cols, not needed</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Name =</span> <span class="st">&#39;Country Name&#39;</span>, <span class="at">Code =</span> <span class="st">&#39;Country Code&#39;</span>) <span class="co"># renaming</span></span>
 <span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>df_meta <span class="ot">&lt;-</span> df_meta <span class="sc">%&gt;%</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">!</span>SpecialNotes) <span class="sc">%&gt;%</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">!</span><span class="fu">last_col</span>())</span></code></pre></div>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">!</span>SpecialNotes) <span class="sc">%&gt;%</span> <span class="co"># drop column &#39;SpecialNotes&#39;, not needed</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">!</span><span class="fu">last_col</span>()) <span class="co"># drop last column, no data</span></span></code></pre></div>
 <p>One additional step on the regional metadata .. we will use the conditional statement <strong>ifelse</strong> to impute whether the observation pertains to a Country or a Region, and to impute the value from the TableName column where Region is NA.</p>
 <p>(This is due to a very large number of ‘secondary’ Region categories, and the likelihood of wanting to look at Country-only and Region-only data in any further analysis.)</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># impute missing Region values</span></span>
@@ -1705,6 +1706,134 @@ champion
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co"># correct Mortality Rate to actual rate (/1000)</span></span>
 <span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="st">`</span><span class="at">Mortality Rate</span><span class="st">`</span> <span class="ot">=</span> <span class="st">`</span><span class="at">Mortality Rate</span><span class="st">`</span><span class="sc">/</span><span class="dv">1000</span>)</span></code></pre></div>
+<table class=" lightable-minimal" style="font-family: &quot;Trebuchet MS&quot;, verdana, sans-serif; margin-left: auto; margin-right: auto;">
+<caption>
+final df (sample)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Name
+</th>
+<th style="text-align:left;">
+Code
+</th>
+<th style="text-align:left;">
+Year
+</th>
+<th style="text-align:right;">
+Mortality Rate
+</th>
+<th style="text-align:left;">
+Region
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+<td style="text-align:left;">
+AFE
+</td>
+<td style="text-align:left;">
+1969
+</td>
+<td style="text-align:right;">
+0.2159640
+</td>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+<td style="text-align:left;">
+AFE
+</td>
+<td style="text-align:left;">
+1970
+</td>
+<td style="text-align:right;">
+0.2146804
+</td>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+<td style="text-align:left;">
+AFE
+</td>
+<td style="text-align:left;">
+1971
+</td>
+<td style="text-align:right;">
+0.2132826
+</td>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+<td style="text-align:left;">
+AFE
+</td>
+<td style="text-align:left;">
+1972
+</td>
+<td style="text-align:right;">
+0.2118596
+</td>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+<td style="text-align:left;">
+AFE
+</td>
+<td style="text-align:left;">
+1973
+</td>
+<td style="text-align:right;">
+0.2104980
+</td>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+<td style="text-align:left;">
+AFE
+</td>
+<td style="text-align:left;">
+1974
+</td>
+<td style="text-align:right;">
+0.2091949
+</td>
+<td style="text-align:left;">
+Africa Eastern and Southern
+</td>
+</tr>
+</tbody>
+</table>
 <p>To aid in analysis, we’ll filter two subtables - one with Country data only, and one with Region data only.</p>
 <p>Let’s also take a look at the unique names in each table to compare the “main” geo-based Regions in the Countries table, with a much larger number of “secondary” Regions in the Region table:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># analysis</span></span>
